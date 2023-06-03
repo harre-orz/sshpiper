@@ -6,9 +6,12 @@ import (
 	"os/exec"
 	"runtime/debug"
 	"time"
+	"strings"
 
 	"github.com/pires/go-proxyproto"
 	log "github.com/sirupsen/logrus"
+	"log/syslog"
+	logrus_syslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/tg123/sshpiper/cmd/sshpiperd/internal/plugin"
 	"github.com/urfave/cli/v2"
 )
@@ -67,6 +70,32 @@ func createCmdPlugin(args []string) (*plugin.CmdPlugin, error) {
 	return p, nil
 }
 
+type customSyslogHook struct {
+	*logrus_syslog.SyslogHook
+}
+
+func ParseSyslogLevel(lvl string) (syslog.Priority, error) {
+	switch strings.ToLower(lvl) {
+	case "emerg":
+		return syslog.LOG_EMERG, nil
+	case "alert":
+		return syslog.LOG_ALERT, nil
+	case "crit":
+		return syslog.LOG_CRIT, nil
+	case "error":
+		return syslog.LOG_ERR, nil
+	case "warn", "warning":
+		return syslog.LOG_WARNING, nil
+	case "notice":
+		return syslog.LOG_NOTICE, nil
+	case "debug":
+		return syslog.LOG_DEBUG, nil
+	default:
+		var l syslog.Priority
+		return l, fmt.Errorf("not a valid syslog Level: %q", lvl)
+	}
+}
+
 func main() {
 
 	app := &cli.App{
@@ -115,6 +144,12 @@ func main() {
 				EnvVars: []string{"SSHPIPERD_LOG_LEVEL"},
 			},
 			&cli.StringFlag{
+				Name:    "syslog-level",
+				Value:   "",
+				Usage:   "syslog level, one or none of: debug, info, notice, warn, error, crit, alert, emerg",
+				EnvVars: []string{"SSHPIPERD_SYSLOG_LEVEL"},
+			},
+			&cli.StringFlag{
 				Name:    "typescript-log-dir",
 				Value:   "",
 				Usage:   "create typescript format screen recording and save into the directory see https://linux.die.net/man/1/script",
@@ -146,6 +181,18 @@ func main() {
 			}
 
 			log.SetLevel(level)
+
+			if ctx.String("syslog-level") != "" {
+				priority, err := ParseSyslogLevel(ctx.String("syslog-level"))
+				if err != nil {
+					return err
+				}
+				hook, err := logrus_syslog.NewSyslogHook("", "", priority, "")
+				if err != nil {
+					return err
+				}
+				log.AddHook(&customSyslogHook{hook})
+			}
 
 			log.Info("starting sshpiperd version: ", version())
 			d, err := newDaemon(ctx)
