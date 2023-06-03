@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 	"strings"
+	"path/filepath"
 
 	"github.com/pires/go-proxyproto"
 	log "github.com/sirupsen/logrus"
@@ -187,7 +188,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				hook, err := logrus_syslog.NewSyslogHook("", "", priority, "")
+				hook, err := logrus_syslog.NewSyslogHook("", "", priority, filepath.Base(os.Args[0]))
 				if err != nil {
 					return err
 				}
