@@ -77,19 +77,15 @@ type customSyslogHook struct {
 
 func parseSyslogLevel(lvl string) (syslog.Priority, error) {
 	switch strings.ToLower(lvl) {
-	case "emerg", "emergency":
-		return syslog.LOG_EMERG, nil
-	case "alert":
-		return syslog.LOG_ALERT, nil
-	case "crit", "critical":
+	case "panic", "fatal":
 		return syslog.LOG_CRIT, nil
-	case "error", "err":
+	case "error":
 		return syslog.LOG_ERR, nil
 	case "warn", "warning":
 		return syslog.LOG_WARNING, nil
-	case "notice":
-		return syslog.LOG_NOTICE, nil
-	case "debug":
+	case "info":
+		return syslog.LOG_INFO, nil
+	case "debug", "trace":
 		return syslog.LOG_DEBUG, nil
 	default:
 		var l syslog.Priority
@@ -147,7 +143,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "syslog-level",
 				Value:   "",
-				Usage:   "syslog level, one or none of: debug, info, notice, warn, error, crit, alert, emerg",
+				Usage:   "syslog level, one or none of: trace, debug, info, warn, error, fatal, panic",
 				EnvVars: []string{"SSHPIPERD_SYSLOG_LEVEL"},
 			},
 			&cli.StringFlag{
