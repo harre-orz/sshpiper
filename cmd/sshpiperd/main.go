@@ -74,15 +74,15 @@ type customSyslogHook struct {
 	*logrus_syslog.SyslogHook
 }
 
-func ParseSyslogLevel(lvl string) (syslog.Priority, error) {
+func parseSyslogLevel(lvl string) (syslog.Priority, error) {
 	switch strings.ToLower(lvl) {
-	case "emerg":
+	case "emerg", "emergency":
 		return syslog.LOG_EMERG, nil
 	case "alert":
 		return syslog.LOG_ALERT, nil
-	case "crit":
+	case "crit", "critical":
 		return syslog.LOG_CRIT, nil
-	case "error":
+	case "error", "err":
 		return syslog.LOG_ERR, nil
 	case "warn", "warning":
 		return syslog.LOG_WARNING, nil
@@ -183,7 +183,7 @@ func main() {
 			log.SetLevel(level)
 
 			if ctx.String("syslog-level") != "" {
-				priority, err := ParseSyslogLevel(ctx.String("syslog-level"))
+				priority, err := parseSyslogLevel(ctx.String("syslog-level"))
 				if err != nil {
 					return err
 				}
