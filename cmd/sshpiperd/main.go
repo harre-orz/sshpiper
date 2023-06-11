@@ -71,21 +71,19 @@ func createCmdPlugin(args []string) (*plugin.CmdPlugin, error) {
 	return p, nil
 }
 
-type customSyslogHook struct {
-	*logrus_syslog.SyslogHook
-}
-
 func parseSyslogLevel(lvl string) (syslog.Priority, error) {
 	switch strings.ToLower(lvl) {
-	case "panic", "fatal":
+	case "crit", "critical":
 		return syslog.LOG_CRIT, nil
-	case "error":
+	case "err", "error":
 		return syslog.LOG_ERR, nil
 	case "warn", "warning":
 		return syslog.LOG_WARNING, nil
-	case "info":
+	case "info", "information":
 		return syslog.LOG_INFO, nil
-	case "debug", "trace":
+	case "notice":
+		return syslog.LOG_NOTICE, nil
+	case "debug":
 		return syslog.LOG_DEBUG, nil
 	default:
 		var l syslog.Priority
@@ -143,7 +141,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "syslog-level",
 				Value:   "",
-				Usage:   "syslog level, one or none of: trace, debug, info, warn, error, fatal, panic",
+				Usage:   "syslog level, one or none of: debug, info, notice, error, crit",
 				EnvVars: []string{"SSHPIPERD_SYSLOG_LEVEL"},
 			},
 			&cli.StringFlag{
@@ -188,7 +186,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				log.AddHook(&customSyslogHook{hook})
+				log.AddHook(hook)
 			}
 
 			log.Info("starting sshpiperd version: ", version())
